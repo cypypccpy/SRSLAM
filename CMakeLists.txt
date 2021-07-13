@@ -148,9 +148,8 @@ set(THIRD_PARTY_LIBS
 
 add_library(${PROJECT_NAME} SHARED
   src/camera.cpp
-  src/stereo.cpp
-  src/frame.cpp
   src/frontend.cpp
+  src/stereo.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

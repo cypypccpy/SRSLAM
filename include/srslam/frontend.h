@@ -2,13 +2,30 @@
 
 #include <opencv2/features2d.hpp>
 #include <opencv2/opencv.hpp>
-#include <sophus/se3.hpp>
-#include <sophus/so3.hpp>
 #include <ros/ros.h>
 #include <opencv2/core/core.hpp>
-
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <srslam/camera.h>
-#include <srslam/frame.h>
+#include<opencv2/core/eigen.hpp>
+
+#include <ros/ros.h>
+#include <image_transport/image_transport.h>
+#include <opencv2/highgui/highgui.hpp>
+#include <cv_bridge/cv_bridge.h>
+#include<iostream>
+#include<algorithm>
+#include<fstream>
+#include<chrono>
+#include <camera_info_manager/camera_info_manager.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/image_encodings.h>
+#include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/Imu.h>
 
 enum class FrontendStatus { INITING, TRACKING_GOOD, TRACKING_BAD, LOST };
 
@@ -20,14 +37,14 @@ class Frontend {
     public:
         Frontend();
 
-        /// 外部接口，添加一个帧并计算其定位结果
-        bool AddFrame(std::shared_ptr<frame> new_frame_);
         /// 外部接口
         void SetCameras(std::shared_ptr<camera> left, std::shared_ptr<camera> right) {
             camera_left_ = left;
             camera_right_ = right;
         }
-        
+
+        void RegisterCallBack(const sensor_msgs::ImageConstPtr& msgLeft, const sensor_msgs::ImageConstPtr& msgRight);
+
     private:
         /**
          * Track in normal mode
@@ -96,12 +113,14 @@ class Frontend {
         void SetObservationsForKeyFrame();
 
         // data
-        Sophus::SE3d relative_motion_;  // 当前帧与上一帧的相对运动，用于估计当前帧pose初值
+        Eigen::Isometry3d relative_motion_;  // 当前帧与上一帧的相对运动，用于估计当前帧pose初值
 
         int tracking_inliers_ = 0;  // inliers, used for testing new keyframes
 
-        std::shared_ptr<frame> current_frame_ = nullptr;
-        std::shared_ptr<frame> last_frame_ = nullptr;
+        cv::Mat current_imgL_, current_imgR_, last_imgL_, last_imgR_;
+
+        std::vector<cv::KeyPoint> current_left_keypoint_position_, current_right_keypoint_position_;
+
         std::shared_ptr<camera> camera_left_ = nullptr;   // 左侧相机
         std::shared_ptr<camera> camera_right_ = nullptr;  // 右侧相机
         FrontendStatus status_ = FrontendStatus::INITING;
@@ -115,4 +134,13 @@ class Frontend {
 
         // utilities
         cv::Ptr<cv::GFTTDetector> gftt_;  // feature detector in opencv
+
+        //ros
+        ros::NodeHandle nh_;  
+        image_transport::ImageTransport* it_;
+        typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,sensor_msgs::Image> sync_pol;
+        message_filters::Subscriber<sensor_msgs::Image>* right_sub_ ;
+        message_filters::Subscriber<sensor_msgs::Image>* left_sub_;
+
+        message_filters::Synchronizer<sync_pol>* sync_;
 };

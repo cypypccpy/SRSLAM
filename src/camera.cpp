@@ -2,12 +2,11 @@
 
 camera::camera() {};
 
-Eigen::Matrix<double, 3, 1> camera::world2camera(const Eigen::Matrix<double, 3, 1> &p_w, const Sophus::SE3d &T_c_w) {
-    auto 
+Eigen::Matrix<double, 3, 1> camera::world2camera(const Eigen::Matrix<double, 3, 1> &p_w, const Eigen::Isometry3d &T_c_w) {
     return pose_ * T_c_w * p_w;
 }
-/*
-Eigen::Matrix<double, 3, 1> camera::camera2world(const Eigen::Matrix<double, 3, 1> &p_c, const Sophus::SE3d &T_c_w) {
+
+Eigen::Matrix<double, 3, 1> camera::camera2world(const Eigen::Matrix<double, 3, 1> &p_c, const Eigen::Isometry3d &T_c_w) {
     return T_c_w.inverse() * pose_inv_ * p_c;
 }
 
@@ -26,11 +25,10 @@ Eigen::Matrix<double, 3, 1> camera::pixel2camera(const Eigen::Matrix<double, 2, 
     );
 }
 
-Eigen::Matrix<double, 2, 1> camera::world2pixel(const Eigen::Matrix<double, 3, 1> &p_w, const Sophus::SE3d &T_c_w) {
+Eigen::Matrix<double, 2, 1> camera::world2pixel(const Eigen::Matrix<double, 3, 1> &p_w, const Eigen::Isometry3d &T_c_w) {
     return camera2pixel(world2camera(p_w, T_c_w));
 }
 
-Eigen::Matrix<double, 3, 1> camera::pixel2world(const Eigen::Matrix<double, 2, 1> &p_p, const Sophus::SE3d &T_c_w, double depth) {
+Eigen::Matrix<double, 3, 1> camera::pixel2world(const Eigen::Matrix<double, 2, 1> &p_p, const Eigen::Isometry3d &T_c_w, double depth) {
     return camera2world(pixel2camera(p_p, depth), T_c_w);
 }
-*/

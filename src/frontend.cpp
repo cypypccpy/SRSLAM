@@ -1,15 +1,22 @@
 #include "srslam/frontend.h"
 
 Frontend::Frontend() {
+    it_ = new image_transport::ImageTransport(nh_);
+    right_sub_ = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "/mynteye/right/image_raw", 1);
+    left_sub_  = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "/mynteye/left/image_raw", 1);
+
+    sync_ = new message_filters::Synchronizer<sync_pol>(sync_pol(10), *right_sub_, *left_sub_);
+    sync_->registerCallback(boost::bind(&Frontend::RegisterCallBack,this, _1, _2));
+
     gftt_ =
         cv::GFTTDetector::create(150, 0.01, 20);
     num_features_init_ = 50;
     num_features_ = 50;
 }
 
-bool Frontend::AddFrame(std::shared_ptr<frame> new_frame_) {
-
-    current_frame_ = new_frame_;
+void Frontend::RegisterCallBack(const sensor_msgs::ImageConstPtr& msgLeft, const sensor_msgs::ImageConstPtr& msgRight) {
+    current_imgL_ = cv_bridge::toCvShare(msgLeft, "bgr8")->image;
+    current_imgR_ = cv_bridge::toCvShare(msgRight, "bgr8")->image;
 
     switch (status_) {
         case FrontendStatus::INITING:
@@ -24,8 +31,8 @@ bool Frontend::AddFrame(std::shared_ptr<frame> new_frame_) {
             break;
     }
 
-    last_frame_ = current_frame_;
-    return true;
+    last_imgL_ = current_imgL_;
+    last_imgR_ = current_imgR_;
 }
 
 /*
@@ -114,17 +121,17 @@ bool Frontend::StereoInit() {
 }
 
 int Frontend::DetectFeatures() {
-    cv::Mat mask(current_frame_->left_img_.size(), CV_8UC1, 255);
+    cv::Mat mask(current_imgL_.size(), CV_8UC1, 255);
 
     std::vector<cv::KeyPoint> keypoints;
-    gftt_->detect(current_frame_->left_img_, keypoints, mask);
+    gftt_->detect(current_imgL_, keypoints, mask);
     int cnt_detected = 0;
     for (auto &kp : keypoints) {
-        current_frame_->left_keypoint_position_.push_back(kp);
+        current_left_keypoint_position_.push_back(kp);
         cnt_detected++;
     }
 
-    for (auto &feat : current_frame_->left_keypoint_position_) {
+    for (auto &feat : current_left_keypoint_position_) {
         cv::rectangle(mask, feat.pt - cv::Point2f(10, 10),
                       feat.pt + cv::Point2f(10, 10), 0, -1);
     }
@@ -136,7 +143,7 @@ int Frontend::DetectFeatures() {
 int Frontend::FindFeaturesInRight() {
     // use LK flow to estimate points in the right image
     std::vector<cv::Point2f> kps_left, kps_right;
-    for (auto &kp : current_frame_->left_keypoint_position_) {
+    for (auto &kp : current_left_keypoint_position_) {
         kps_left.push_back(kp.pt);
         // 待定
         // use same pixel in left image
@@ -147,7 +154,7 @@ int Frontend::FindFeaturesInRight() {
     std::vector<uchar> status;
     cv::Mat error;
     cv::calcOpticalFlowPyrLK(
-        current_frame_->left_img_, current_frame_->right_img_, kps_left,
+        current_imgL_, current_imgR_, kps_left,
         kps_right, status, error, cv::Size(11, 11), 3,
         cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30,
                          0.01),
@@ -157,7 +164,7 @@ int Frontend::FindFeaturesInRight() {
     for (size_t i = 0; i < status.size(); ++i) {
         if (status[i]) {
             cv::KeyPoint kp(kps_right[i], 7);
-            current_frame_->right_keypoint_position_.push_back(kp);
+            current_right_keypoint_position_.push_back(kp);
             num_good_pts++;
         }
     }
@@ -167,22 +174,25 @@ int Frontend::FindFeaturesInRight() {
 
 
 bool Frontend::BuildInitMap() {
-    /*
-    std::vector<Sophus::SE3d> poses{camera_left_->pose(), camera_right_->pose()};
+    
+    std::vector<Eigen::Isometry3d> poses{camera_left_->pose(), camera_right_->pose()};
     size_t cnt_init_landmarks = 0;
-    for (size_t i = 0; i < current_frame_->left_keypoint_position_.size(); ++i) {
-        if (current_frame_->left_keypoint_position_[i] == nullptr) continue;
+    for (size_t i = 0; i < current_left_keypoint_position_.size(); ++i) {
+        if (current_left_keypoint_position_[i] == nullptr) continue;
         // create map point from triangulation
-        std::vector<Eigen::Matrix<double, 3, 1>> points{
+        std::vector<Eigen::Vector3d> points{
             camera_left_->pixel2camera(
-                Vec2(current_frame_->features_left_[i]->position_.pt.x,
+                Eigen::Vector2d(current_frame_->features_left_[i]->position_.pt.x,
                      current_frame_->features_left_[i]->position_.pt.y)),
             camera_right_->pixel2camera(
-                Vec2(current_frame_->features_right_[i]->position_.pt.x,
+                Eigen::Vector2d(current_frame_->features_right_[i]->position_.pt.x,
                      current_frame_->features_right_[i]->position_.pt.y))};
-        Vec3 pworld = Vec3::Zero();
+        Eigen::Vector3d pworld = Eigen::Vector3d::Zero();
 
-        if (triangulation(poses, points, pworld) && pworld[2] > 0) {
+        //
+        cv::Mat points_left = cv::eigen2cv()
+
+        if (cv::triangulatePoints(poses[0].block(0, 0, 3, 4), poses[1].block(0, 0, 3, 4), points, pworld) && pworld[2] > 0) {
             auto new_map_point = MapPoint::CreateNewMappoint();
             new_map_point->SetPos(pworld);
             new_map_point->AddObservation(current_frame_->features_left_[i]);
@@ -199,7 +209,7 @@ bool Frontend::BuildInitMap() {
 
     LOG(INFO) << "Initial map created with " << cnt_init_landmarks
               << " map points";
-*/
+
     return true;
 }
 
