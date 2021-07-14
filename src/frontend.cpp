@@ -178,21 +178,19 @@ bool Frontend::BuildInitMap() {
     std::vector<Eigen::Isometry3d> poses{camera_left_->pose(), camera_right_->pose()};
     size_t cnt_init_landmarks = 0;
     for (size_t i = 0; i < current_left_keypoint_position_.size(); ++i) {
-        if (current_left_keypoint_position_[i] == nullptr) continue;
+        if (current_left_keypoint_position_[i].size == 0) continue;
         // create map point from triangulation
         std::vector<Eigen::Vector3d> points{
             camera_left_->pixel2camera(
-                Eigen::Vector2d(current_frame_->features_left_[i]->position_.pt.x,
-                     current_frame_->features_left_[i]->position_.pt.y)),
+                Eigen::Vector2d(current_left_keypoint_position_[i].pt.x,
+                     current_left_keypoint_position_[i].pt.y)),
             camera_right_->pixel2camera(
-                Eigen::Vector2d(current_frame_->features_right_[i]->position_.pt.x,
-                     current_frame_->features_right_[i]->position_.pt.y))};
+                Eigen::Vector2d(current_right_keypoint_position_[i].pt.x,
+                     current_right_keypoint_position_[i].pt.y))};
         Eigen::Vector3d pworld = Eigen::Vector3d::Zero();
 
-        //
-        cv::Mat points_left = cv::eigen2cv()
-
-        if (cv::triangulatePoints(poses[0].block(0, 0, 3, 4), poses[1].block(0, 0, 3, 4), points, pworld) && pworld[2] > 0) {
+/*
+        if (triangulatePoints(poses[0], poses[1], points, pworld) && pworld[2] > 0) {
             auto new_map_point = MapPoint::CreateNewMappoint();
             new_map_point->SetPos(pworld);
             new_map_point->AddObservation(current_frame_->features_left_[i]);
@@ -205,11 +203,32 @@ bool Frontend::BuildInitMap() {
     }
     current_frame_->SetKeyFrame();
     map_->InsertKeyFrame(current_frame_);
-    backend_->UpdateMap();
+    //backend_->UpdateMap();
 
     LOG(INFO) << "Initial map created with " << cnt_init_landmarks
               << " map points";
-
+*/
+    }
     return true;
+    }
+
+bool Frontend::triangulation(const std::vector<Eigen::Isometry3d> &poses,
+                   const std::vector<Eigen::Vector3d> points, Eigen::Vector3d &pt_world) {
+    Eigen::Matrix<double, -1, -1> A(2 * poses.size(), 4);
+    Eigen::Matrix<double, -1, 1> b(2 * poses.size());
+    b.setZero();
+    for (size_t i = 0; i < poses.size(); ++i) {
+        Eigen::Matrix<double, 3, 4> m = poses[i].matrix().block(0, 0, 3, 4);
+        A.block<1, 4>(2 * i, 0) = points[i][0] * m.row(2) - m.row(0);
+        A.block<1, 4>(2 * i + 1, 0) = points[i][1] * m.row(2) - m.row(1);
+    }
+    auto svd = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
+    pt_world = (svd.matrixV().col(3) / svd.matrixV()(3, 3)).head<3>();
+
+    if (svd.singularValues()[3] / svd.singularValues()[2] < 1e-2) {
+        // 解质量不好，放弃
+        return true;
+    }
+    return false;
 }
 

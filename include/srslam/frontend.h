@@ -7,7 +7,6 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <srslam/camera.h>
-#include<opencv2/core/eigen.hpp>
 
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
@@ -111,6 +110,9 @@ class Frontend {
          * Set the features in keyframe as new observation of the map points
          */
         void SetObservationsForKeyFrame();
+
+        bool triangulation(const std::vector<Eigen::Isometry3d> &poses,
+                   const std::vector<Eigen::Vector3d> points, Eigen::Vector3d &pt_world);
 
         // data
         Eigen::Isometry3d relative_motion_;  // 当前帧与上一帧的相对运动，用于估计当前帧pose初值

@@ -20,6 +20,7 @@ class camera {
         pose_inv_ = pose_.inverse();
     }
 
+    Eigen::Isometry3d pose() const { return pose_; }
     // return intrinsic matrix
     
     Eigen::Matrix<double, 3, 3> K() const {
@@ -35,7 +36,7 @@ class camera {
 
     Eigen::Matrix<double, 2, 1> camera2pixel(const Eigen::Matrix<double, 3, 1> &p_c);
 
-    Eigen::Matrix<double, 3, 1> pixel2camera(const Eigen::Matrix<double, 2, 1> &p_p, double depth);
+    Eigen::Matrix<double, 3, 1> pixel2camera(const Eigen::Matrix<double, 2, 1> &p_p, double depth = 1);
 
     Eigen::Matrix<double, 2, 1> world2pixel(const Eigen::Matrix<double, 3, 1> &p_w, const Eigen::Isometry3d &T_c_w);
 

@@ -150,6 +150,7 @@ add_library(${PROJECT_NAME} SHARED
   src/camera.cpp
   src/frontend.cpp
   src/stereo.cpp
+  src/map.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
