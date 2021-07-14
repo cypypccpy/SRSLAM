@@ -7,7 +7,10 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <srslam/camera.h>
-#include <srslam/map.h>
+#include <srslam/datastruct/map.h>
+#include <srslam/datastruct/mappoint.h>
+#include <srslam/datastruct/frame.h>
+#include <srslam/datastruct/feature.h>
 
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
@@ -120,11 +123,12 @@ class Frontend {
         // data
         Eigen::Isometry3d relative_motion_;  // 当前帧与上一帧的相对运动，用于估计当前帧pose初值
 
+        std::shared_ptr<frame> current_frame_ = nullptr;  // 当前帧
+        std::shared_ptr<frame> last_frame_ = nullptr;     // 上一帧
+
         int tracking_inliers_ = 0;  // inliers, used for testing new keyframes
 
-        cv::Mat current_imgL_, current_imgR_, last_imgL_, last_imgR_;
-
-        std::vector<cv::KeyPoint> current_left_keypoint_position_, current_right_keypoint_position_;
+        cv::Mat current_imgL_, current_imgR_;
 
         //std::shared_ptr<sensor_msgs::PointCloud> mappoint;
 
@@ -153,3 +157,5 @@ class Frontend {
 
         message_filters::Synchronizer<sync_pol>* sync_;
 };
+
+

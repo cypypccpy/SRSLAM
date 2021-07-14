@@ -8,10 +8,8 @@
 #include <Eigen/Geometry>
 #include <unordered_map>
 
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/image_encodings.h>
-#include <sensor_msgs/PointCloud.h>
-#include <sensor_msgs/Imu.h>
+#include "srslam/datastruct/frame.h"
+#include "srslam/datastruct/mappoint.h"
 /**
  * @brief 地图
  * 和地图的交互：前端调用InsertKeyframe和InsertMapPoint插入新帧和地图点，后端维护地图的结构，判定outlier/剔除等等
@@ -19,15 +17,15 @@
 class map {
    public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-    typedef std::unordered_map<unsigned long, std::shared_ptr<sensor_msgs::PointCloud>> LandmarksType;
-    typedef std::unordered_map<unsigned long, std::shared_ptr<sensor_msgs::Image>> KeyframesType;
+    typedef std::unordered_map<unsigned long, std::shared_ptr<mappoint>> LandmarksType;
+    typedef std::unordered_map<unsigned long, std::shared_ptr<frame>> KeyframesType;
 
     map() {}
 
     /// 增加一个关键帧
-    void InsertKeyFrame(std::shared_ptr<sensor_msgs::Image> frame);
+    void InsertKeyFrame(std::shared_ptr<frame> frame);
     /// 增加一个地图顶点
-    void InsertMapPoint(std::shared_ptr<sensor_msgs::PointCloud> map_point);
+    void InsertMapPoint(std::shared_ptr<mappoint> map_point);
 
     /// 获取所有地图点
     LandmarksType GetAllMapPoints() {
@@ -65,7 +63,7 @@ class map {
     KeyframesType keyframes_;         // all key-frames
     KeyframesType active_keyframes_;  // all key-frames
 
-    std::shared_ptr<sensor_msgs::Image> current_frame_ = nullptr;
+    std::shared_ptr<frame> current_frame_ = nullptr;
 
     // settings
     int num_active_keyframes_ = 7;  // 激活的关键帧数量
