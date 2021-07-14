@@ -16,13 +16,13 @@
  * @brief 地图
  * 和地图的交互：前端调用InsertKeyframe和InsertMapPoint插入新帧和地图点，后端维护地图的结构，判定outlier/剔除等等
  */
-class Map {
+class map {
    public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     typedef std::unordered_map<unsigned long, std::shared_ptr<sensor_msgs::PointCloud>> LandmarksType;
     typedef std::unordered_map<unsigned long, std::shared_ptr<sensor_msgs::Image>> KeyframesType;
 
-    Map() {}
+    map() {}
 
     /// 增加一个关键帧
     void InsertKeyFrame(std::shared_ptr<sensor_msgs::Image> frame);

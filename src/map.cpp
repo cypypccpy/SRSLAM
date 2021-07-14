@@ -1,6 +1,6 @@
 #include "srslam/map.h"
 
-void Map::InsertKeyFrame(std::shared_ptr<sensor_msgs::Image> frame) {
+void map::InsertKeyFrame(std::shared_ptr<sensor_msgs::Image> frame) {
     current_frame_ = frame;
     if (keyframes_.find(frame->header.seq) == keyframes_.end()) {
         keyframes_.insert(make_pair(frame->header.seq, frame));
@@ -17,7 +17,7 @@ void Map::InsertKeyFrame(std::shared_ptr<sensor_msgs::Image> frame) {
     */
 }
 
-void Map::InsertMapPoint(std::shared_ptr<sensor_msgs::PointCloud> map_point) {
+void map::InsertMapPoint(std::shared_ptr<sensor_msgs::PointCloud> map_point) {
     if (landmarks_.find(map_point->header.seq) == landmarks_.end()) {
         landmarks_.insert(make_pair(map_point->header.seq, map_point));
         active_landmarks_.insert(make_pair(map_point->header.seq, map_point));
@@ -27,7 +27,7 @@ void Map::InsertMapPoint(std::shared_ptr<sensor_msgs::PointCloud> map_point) {
     }
 }
 /*
-void Map::RemoveOldKeyframe() {
+void map::RemoveOldKeyframe() {
     if (current_frame_ == nullptr) return;
     // 寻找与当前帧最近与最远的两个关键帧
     double max_dis = 0, min_dis = 9999;
@@ -77,7 +77,7 @@ void Map::RemoveOldKeyframe() {
 }
 */
 /*
-void Map::CleanMap() {
+void map::CleanMap() {
     int cnt_landmark_removed = 0;
     for (auto iter = active_landmarks_.begin();
          iter != active_landmarks_.end();) {

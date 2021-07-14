@@ -189,26 +189,29 @@ bool Frontend::BuildInitMap() {
                      current_right_keypoint_position_[i].pt.y))};
         Eigen::Vector3d pworld = Eigen::Vector3d::Zero();
 
-/*
-        if (triangulatePoints(poses[0], poses[1], points, pworld) && pworld[2] > 0) {
-            auto new_map_point = MapPoint::CreateNewMappoint();
-            new_map_point->SetPos(pworld);
-            new_map_point->AddObservation(current_frame_->features_left_[i]);
-            new_map_point->AddObservation(current_frame_->features_right_[i]);
-            current_frame_->features_left_[i]->map_point_ = new_map_point;
-            current_frame_->features_right_[i]->map_point_ = new_map_point;
+
+        if (triangulation(poses, points, pworld) && pworld[2] > 0) {
+            std::shared_ptr<sensor_msgs::PointCloud> new_map_point;
+
+            //data convert
+            geometry_msgs::Point temp_point;
+            tf::pointEigenToMsg(pworld, temp_point);
+            new_map_point->points = temp_point;
+
+            //new_map_point->AddObservation(current_frame_->features_left_[i]);
+            //new_map_point->AddObservation(current_frame_->features_right_[i]);
+            //current_frame_->features_left_[i]->map_point_ = new_map_point;
+            //current_frame_->features_right_[i]->map_point_ = new_map_point;
             cnt_init_landmarks++;
             map_->InsertMapPoint(new_map_point);
         }
     }
-    current_frame_->SetKeyFrame();
-    map_->InsertKeyFrame(current_frame_);
+    //current_frame_->SetKeyFrame();
+    //map_->InsertKeyFrame(current_frame_);
     //backend_->UpdateMap();
 
-    LOG(INFO) << "Initial map created with " << cnt_init_landmarks
-              << " map points";
-*/
-    }
+    ROS_INFO("Initial map created with %d map points", cnt_init_landmarks);
+
     return true;
     }
 

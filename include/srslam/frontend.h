@@ -7,6 +7,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <srslam/camera.h>
+#include <srslam/map.h>
 
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
@@ -25,6 +26,8 @@
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/Imu.h>
+
+#include <eigen_conversions/eigen_msg.h>
 
 enum class FrontendStatus { INITING, TRACKING_GOOD, TRACKING_BAD, LOST };
 
@@ -123,8 +126,12 @@ class Frontend {
 
         std::vector<cv::KeyPoint> current_left_keypoint_position_, current_right_keypoint_position_;
 
+        //std::shared_ptr<sensor_msgs::PointCloud> mappoint;
+
         std::shared_ptr<camera> camera_left_ = nullptr;   // 左侧相机
         std::shared_ptr<camera> camera_right_ = nullptr;  // 右侧相机
+
+        std::shared_ptr<map> map_;
         FrontendStatus status_ = FrontendStatus::INITING;
 
         // params
