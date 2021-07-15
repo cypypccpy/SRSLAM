@@ -42,10 +42,10 @@ void Frontend::RegisterCallBack(const sensor_msgs::ImageConstPtr& msgLeft, const
 
 
 //------------------------Track-------------------------
-/*
+
 bool Frontend::Track() {
     if (last_frame_) {
-        current_frame_->SetPose(relative_motion_ * last_frame_.Pose());
+        current_frame_->SetPose(relative_motion_ * last_frame_->Pose());
     }
 
     int num_track_last = TrackLastFrame();
@@ -100,9 +100,9 @@ int Frontend::TrackLastFrame() {
     for (size_t i = 0; i < status.size(); ++i) {
         if (status[i]) {
             cv::KeyPoint kp(kps_current[i], 7);
-            std::shared_ptr<feature> feature(new feature(current_frame_, kp));
-            feature->map_point_ = last_frame_->features_left_[i]->map_point_;
-            current_frame_->features_left_.push_back(feature);
+            std::shared_ptr<feature> feature_cur(new feature(current_frame_, kp));
+            feature_cur->map_point_ = last_frame_->features_left_[i]->map_point_;
+            current_frame_->features_left_.push_back(feature_cur);
             num_good_pts++;
         }
     }
@@ -111,7 +111,10 @@ int Frontend::TrackLastFrame() {
     return num_good_pts;
 }
 
-*/
+int Frontend::EstimateCurrentPose() {
+
+}
+
 //------------------------StereoInit-------------------------
 bool Frontend::StereoInit() {
     int num_features_left = DetectFeatures();
@@ -251,5 +254,10 @@ bool Frontend::triangulation(const std::vector<Eigen::Isometry3d> &poses,
         return true;
     }
     return false;
+}
+
+bool Frontend::Reset() {
+    ROS_INFO("Reset is not implemented. ");
+    return true;
 }
 
