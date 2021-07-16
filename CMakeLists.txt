@@ -27,8 +27,8 @@ SET( G2O_ROOT /usr/local/include/g2o )
 find_package(Boost REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(Sophus REQUIRED)
 find_package(G2O REQUIRED)
+find_package(GTSAM REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -133,13 +133,12 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  ${Sophus_INCLUDE_DIRS}
   ${G2O_INCLUDE_DIRS}
+  ${GTSAM_INCLUDE_DIR}
 )
 
 set(THIRD_PARTY_LIBS
         ${OpenCV_LIBS}
-        ${Sophus_LIBRARIES}
         g2o_core g2o_stuff g2o_types_sba g2o_solver_csparse g2o_csparse_extension
         pthread
         )
@@ -161,6 +160,7 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES} 
   ${THIRD_PARTY_LIBS}
+  -lgtsam -ltbb
 )
 
 ## Add cmake target dependencies of the library

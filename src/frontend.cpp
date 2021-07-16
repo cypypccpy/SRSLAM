@@ -62,7 +62,7 @@ bool Frontend::Track() {
         status_ = FrontendStatus::LOST;
     }
 
-    InsertKeyframe();
+    //InsertKeyframe();
     relative_motion_ = current_frame_->Pose() * last_frame_->Pose().inverse();
 
     //if (viewer_) viewer_->AddCurrentFrame(current_frame_);
@@ -112,6 +112,49 @@ int Frontend::TrackLastFrame() {
 }
 
 int Frontend::EstimateCurrentPose() {
+    gtsam::Values initial_estimate;
+    gtsam::NonlinearFactorGraph graph;
+
+    // 2 poses
+    initial_estimate.insert(gtsam::Symbol('x', 1), gtsam::Pose3(last_frame_->Pose().matrix()));
+    initial_estimate.insert(gtsam::Symbol('x', 2), gtsam::Pose3(current_frame_->Pose().matrix()));
+
+    // create factor noise model with 3 sigmas of value 1
+    const auto model = gtsam::noiseModel::Isotropic::Sigma(3, 1);
+    // create stereo camera calibration object with .2m between cameras
+    const gtsam::Cal3_S2Stereo::shared_ptr K(
+        new gtsam::Cal3_S2Stereo(camera_left_->fx_, camera_left_->fy_, camera_left_->cx_,
+                                    camera_left_->cy_, 1, camera_left_->baseline_));
+
+    //create and add stereo factors between last pose (key value 1) and all landmarks
+    for (size_t i = 0; i < current_frame_->features_left_.size(); ++i) {
+        graph.emplace_shared<gtsam::GenericStereoFactor<gtsam::Pose3,gtsam::Point3> >(
+            gtsam::StereoPoint2(current_frame_->features_left_[i]->position_.pt.x, 
+                                current_frame_->features_right_[i]->position_.pt.x, current_frame_->features_left_[i]->position_.pt.y),
+                                model, gtsam::Symbol('x', 1), gtsam::Symbol('l', i + 2), K);
+    }
+
+    gtsam::Pose3 current_pose = initial_estimate.at<gtsam::Pose3>(gtsam::Symbol('x', 2));
+    // constrain the first pose such that it cannot change from its original value
+    // during optimization
+    // NOTE: NonlinearEquality forces the optimizer to use QR rather than Cholesky
+    // QR is much slower than Cholesky, but numerically more stable
+    graph.emplace_shared<gtsam::NonlinearEquality<gtsam::Pose3> >(gtsam::Symbol('x', 2), current_pose);
+
+    std::cout << "Optimizing" << std::endl;
+    // create Levenberg-Marquardt optimizer to optimize the factor graph
+    gtsam::LevenbergMarquardtParams params;
+    params.orderingType = gtsam::Ordering::METIS;
+    gtsam::LevenbergMarquardtOptimizer optimizer(graph, initial_estimate, params);
+    gtsam::Values result = optimizer.optimize();
+
+    std::cout << "Final result sample:" << std::endl;
+    gtsam::Values pose_values = result.filter<gtsam::Pose3>();
+    pose_values.print("Final camera poses:\n");
+
+    gtsam::Values landmarks_walues = result.filter<gtsam::Point3>();
+    landmarks_walues.print("Final camera poses:\n");
+
 
 }
 

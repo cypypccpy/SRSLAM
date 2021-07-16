@@ -30,7 +30,15 @@
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/Imu.h>
 
-#include <eigen_conversions/eigen_msg.h>
+#include <gtsam/geometry/Pose3.h>
+#include <gtsam/geometry/Cal3_S2Stereo.h>
+#include <gtsam/nonlinear/Values.h>
+#include <gtsam/nonlinear/NonlinearEquality.h>
+#include <gtsam/nonlinear/NonlinearFactorGraph.h>
+#include <gtsam/nonlinear/LevenbergMarquardtOptimizer.h>
+#include <gtsam/inference/Symbol.h>
+#include <gtsam/slam/StereoFactor.h>
+#include <gtsam/slam/dataset.h>
 
 enum class FrontendStatus { INITING, TRACKING_GOOD, TRACKING_BAD, LOST };
 
