@@ -20,7 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 
-LIST( APPEND CMAKE_MODULE_PATH /home/hp-3070/g2o/cmake_modules ) 
+LIST( APPEND CMAKE_MODULE_PATH ~/g2o/cmake_modules ) 
 SET( G2O_ROOT /usr/local/include/g2o ) 
 
 ## System dependencies are found with CMake's conventions
@@ -160,7 +160,7 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES} 
   ${THIRD_PARTY_LIBS}
-  -lgtsam -ltbb
+  -lgtsam
 )
 
 ## Add cmake target dependencies of the library

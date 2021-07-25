@@ -1,0 +1,28 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/home/lohse/gtsam_ws/devel/include/**",
+        "/home/lohse/pacecat_ws/devel/include/**",
+        "/home/lohse/21_tigerarm_ros/devel/include/**",
+        "/home/lohse/catkin_ws/devel/include/**",
+        "/opt/ros/melodic/include/**",
+        "/home/lohse/21_tigerarm_ros/src/arm_moveit_kinematics/include/**",
+        "/home/lohse/gtsam_ws/src/LIO-SAM/include/**",
+        "/home/lohse/21_tigerarm_ros/src/mineral_detect/include/**",
+        "/home/lohse/21_tigerarm_ros/src/realsense-ros/realsense2_camera/include/**",
+        "/home/lohse/catkin_ws/src/rmua_scut/roborts_base/include/**",
+        "/home/lohse/catkin_ws/src/rmua_scut/roborts_common/include/**",
+        "/home/lohse/catkin_ws/src/rmua_scut/roborts_costmap/include/**",
+        "/home/lohse/srslam_ws/src/SRSLAM/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS"
+    }
+  ],
+  "version": 4
+}

@@ -30,7 +30,7 @@ void Frontend::RegisterCallBack(const sensor_msgs::ImageConstPtr& msgLeft, const
             break;
         case FrontendStatus::TRACKING_GOOD:
         case FrontendStatus::TRACKING_BAD:
-            //Track();
+            Track();
             break;
         case FrontendStatus::LOST:
             //Reset();
@@ -62,7 +62,7 @@ bool Frontend::Track() {
         status_ = FrontendStatus::LOST;
     }
 
-    //InsertKeyframe();
+    InsertKeyframe();
     relative_motion_ = current_frame_->Pose() * last_frame_->Pose().inverse();
 
     //if (viewer_) viewer_->AddCurrentFrame(current_frame_);
@@ -155,7 +155,78 @@ int Frontend::EstimateCurrentPose() {
     gtsam::Values landmarks_walues = result.filter<gtsam::Point3>();
     landmarks_walues.print("Final camera poses:\n");
 
+}
 
+bool Frontend::InsertKeyframe() {
+    if (tracking_inliers_ >= num_features_needed_for_keyframe_) {
+        // still have enough features, don't insert keyframe
+        return false;
+    }
+    // current frame is a new keyframe
+    current_frame_->SetKeyFrame();
+    map_->InsertKeyFrame(current_frame_);
+
+    std::cout << "Set frame " << current_frame_->id_ << " as keyframe "
+              << current_frame_->keyframe_id_ << std::endl;
+
+    SetObservationsForKeyFrame();
+    DetectFeatures();  // detect new features
+
+    // track in right image
+    FindFeaturesInRight();
+    // triangulate map points
+    TriangulateNewPoints();
+    // update backend because we have a new keyframe
+    
+    //backend_->UpdateMap();
+
+    //if (viewer_) viewer_->UpdateMap();
+
+    return true;
+}
+
+void Frontend::SetObservationsForKeyFrame() {
+    for (auto &feat : current_frame_->features_left_) {
+        auto mp = feat->map_point_.lock();
+        if (mp) mp->AddObservation(feat);
+    }
+}
+
+int Frontend::TriangulateNewPoints() {
+    std::vector<Eigen::Isometry3d> poses{camera_left_->pose(), camera_right_->pose()};
+    Eigen::Isometry3d current_pose_Twc = current_frame_->Pose().inverse();
+    int cnt_triangulated_pts = 0;
+    for (size_t i = 0; i < current_frame_->features_left_.size(); ++i) {
+        if (current_frame_->features_left_[i]->map_point_.expired() &&
+            current_frame_->features_right_[i] != nullptr) {
+            // 左图的特征点未关联地图点且存在右图匹配点，尝试三角化
+            std::vector<Eigen::Vector3d> points{
+                camera_left_->pixel2camera(
+                    Eigen::Vector2d(current_frame_->features_left_[i]->position_.pt.x,
+                         current_frame_->features_left_[i]->position_.pt.y)),
+                camera_right_->pixel2camera(
+                    Eigen::Vector2d(current_frame_->features_right_[i]->position_.pt.x,
+                         current_frame_->features_right_[i]->position_.pt.y))};
+            Eigen::Vector3d pworld = Eigen::Vector3d::Zero();
+
+            if (triangulation(poses, points, pworld) && pworld[2] > 0) {
+                auto new_map_point = mappoint::CreateNewMappoint();
+                pworld = current_pose_Twc * pworld;
+                new_map_point->SetPos(pworld);
+                new_map_point->AddObservation(
+                    current_frame_->features_left_[i]);
+                new_map_point->AddObservation(
+                    current_frame_->features_right_[i]);
+
+                current_frame_->features_left_[i]->map_point_ = new_map_point;
+                current_frame_->features_right_[i]->map_point_ = new_map_point;
+                map_->InsertMapPoint(new_map_point);
+                cnt_triangulated_pts++;
+            }
+        }
+    }
+    ROS_INFO("new landmarks: %d", cnt_triangulated_pts);
+    return cnt_triangulated_pts;
 }
 
 //------------------------StereoInit-------------------------
@@ -299,6 +370,7 @@ bool Frontend::triangulation(const std::vector<Eigen::Isometry3d> &poses,
     return false;
 }
 
+//------------------------Reset-------------------------
 bool Frontend::Reset() {
     ROS_INFO("Reset is not implemented. ");
     return true;
