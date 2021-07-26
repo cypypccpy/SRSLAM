@@ -20,14 +20,10 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 
-LIST( APPEND CMAKE_MODULE_PATH ~/g2o/cmake_modules ) 
-SET( G2O_ROOT /usr/local/include/g2o ) 
-
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(G2O REQUIRED)
 find_package(GTSAM REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -133,13 +129,11 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  ${G2O_INCLUDE_DIRS}
   ${GTSAM_INCLUDE_DIR}
 )
 
 set(THIRD_PARTY_LIBS
         ${OpenCV_LIBS}
-        g2o_core g2o_stuff g2o_types_sba g2o_solver_csparse g2o_csparse_extension
         pthread
         )
 
