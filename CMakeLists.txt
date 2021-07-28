@@ -143,6 +143,7 @@ add_library(${PROJECT_NAME} SHARED
   src/camera.cpp
   src/frontend.cpp
   src/stereo.cpp
+  src/backend.cpp
 
   src/datastruct/map.cpp
   src/datastruct/mappoint.cpp

@@ -131,7 +131,7 @@ int Frontend::EstimateCurrentPose() {
         graph.emplace_shared<gtsam::GenericStereoFactor<gtsam::Pose3,gtsam::Point3> >(
             gtsam::StereoPoint2(current_frame_->features_left_[i]->position_.pt.x, 
                                 current_frame_->features_right_[i]->position_.pt.x, current_frame_->features_left_[i]->position_.pt.y),
-                                model, gtsam::Symbol('x', 1), gtsam::Symbol('l', i + 2), K);
+                                model, gtsam::Symbol('x', 1), gtsam::Symbol('l', i + 3), K);
     }
 
     gtsam::Pose3 current_pose = initial_estimate.at<gtsam::Pose3>(gtsam::Symbol('x', 2));
