@@ -7,6 +7,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <srslam/camera.h>
+#include <srslam/backend.h>
 #include <srslam/datastruct/map.h>
 #include <srslam/datastruct/mappoint.h>
 #include <srslam/datastruct/frame.h>
@@ -40,6 +41,8 @@
 #include <gtsam/slam/StereoFactor.h>
 #include <gtsam/slam/dataset.h>
 
+class Backend;
+
 enum class FrontendStatus { INITING, TRACKING_GOOD, TRACKING_BAD, LOST };
 
 /**
@@ -55,6 +58,9 @@ class Frontend {
             camera_left_ = left;
             camera_right_ = right;
         }
+        void SetBackend(std::shared_ptr<Backend> backend) { backend_ = backend; }
+
+        void SetMap(std::shared_ptr<map> map) { map_ = map; }
 
         void RegisterCallBack(const sensor_msgs::ImageConstPtr& msgLeft, const sensor_msgs::ImageConstPtr& msgRight);
 
@@ -144,6 +150,7 @@ class Frontend {
         std::shared_ptr<camera> camera_right_ = nullptr;  // 右侧相机
 
         std::shared_ptr<map> map_;
+        std::shared_ptr<Backend> backend_ = nullptr;
         FrontendStatus status_ = FrontendStatus::INITING;
 
         // params

@@ -1,0 +1,4 @@
+<launch>
+    <node name="srslam_node" pkg="srslam" type="srslam_node" respawn="false" output="screen">
+    </node>
+</launch>

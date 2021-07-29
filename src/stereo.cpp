@@ -7,6 +7,9 @@ static long factory_id = 0;
 
 bool Stereo::Init() {
     std::shared_ptr<Frontend> frontend_ = std::shared_ptr<Frontend>(new Frontend);
+    std::shared_ptr<Backend> backend_ = std::shared_ptr<Backend>(new Backend);
+    std::shared_ptr<map> map_ = std::shared_ptr<map>(new map);
+
     std::vector<std::shared_ptr<camera>> cameras_;
     
     std::ifstream fin("/home/hp-3070/srslam_ws/src/srslam/config/calib.txt");
@@ -46,6 +49,11 @@ bool Stereo::Init() {
         fin.close();
 
     frontend_->SetCameras(cameras_[0], cameras_[1]);
+    frontend_->SetBackend(backend_);
+    frontend_->SetMap(map_);
+
+    backend_->SetMap(map_);
+    backend_->SetCameras(cameras_[0], cameras_[1]);
 
     return true;
 }

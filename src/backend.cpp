@@ -77,4 +77,20 @@ void Backend::Optimize(map::KeyframesType &keyframes,
     std::cout << "Final result sample:" << std::endl;
     gtsam::Values pose_values = result.filter<gtsam::Pose3>();
     pose_values.print("Final camera poses:\n");
+
+    gtsam::Values landmarks_values = result.filter<gtsam::Point3>();
+    landmarks_values.print("Final landmark poses:\n");
+
+    //可选:去除outlier，现在只是优化pose和feature
+    for ( const gtsam::Values::ConstKeyValuePair& key_value : pose_values ) {
+        Eigen::Isometry3d pose_ = key_value.value.cast<Eigen::Isometry3d>();
+
+        keyframes.at(key_value.key)->SetPose(pose_);
+    }
+
+    for ( const gtsam::Values::ConstKeyValuePair& key_value : landmarks_values ) {
+        Eigen::Vector3d landmark_ = key_value.value.cast<Eigen::Vector3d>();
+
+        landmarks.at(key_value.key)->SetPos(landmark_);
+    }
 }

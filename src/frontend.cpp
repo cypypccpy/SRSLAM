@@ -152,8 +152,9 @@ int Frontend::EstimateCurrentPose() {
     gtsam::Values pose_values = result.filter<gtsam::Pose3>();
     pose_values.print("Final camera poses:\n");
 
-    gtsam::Values landmarks_walues = result.filter<gtsam::Point3>();
-    landmarks_walues.print("Final camera poses:\n");
+    //可选:去除outlier，现在只是优化pose
+    Eigen::Isometry3d pose_ = pose_values.end()->value.cast<Eigen::Isometry3d>();
+    current_frame_->SetPose(pose_);
 
 }
 
@@ -178,7 +179,7 @@ bool Frontend::InsertKeyframe() {
     TriangulateNewPoints();
     // update backend because we have a new keyframe
     
-    //backend_->UpdateMap();
+    backend_->UpdateMap();
 
     //if (viewer_) viewer_->UpdateMap();
 
@@ -343,9 +344,9 @@ bool Frontend::BuildInitMap() {
             }
             current_frame_->SetKeyFrame();
             map_->InsertKeyFrame(current_frame_);
-            //backend_->UpdateMap();
+            backend_->UpdateMap();
 
-    ROS_INFO("Initial map created with %d map points", cnt_init_landmarks);
+    ROS_INFO("Initial map created with %zu map points", cnt_init_landmarks);
 
     return true;
     }
