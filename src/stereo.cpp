@@ -12,9 +12,9 @@ bool Stereo::Init() {
 
     std::vector<std::shared_ptr<camera>> cameras_;
     
-    std::ifstream fin("/home/hp-3070/srslam_ws/src/srslam/config/calib.txt");
+    std::ifstream fin("/home/lohse/srslam_ws/src/SRSLAM/config/calib.txt");
         if (!fin) {
-            ROS_INFO("cannot find /home/hp-3070/srslam_ws/src/srslam/config/calib.txt");
+            ROS_INFO("cannot find /home/lohse/srslam_ws/src/SRSLAM/config/calib.txt");
             return false;
         }
 
