@@ -2,8 +2,8 @@
 
 Frontend::Frontend() {
     it_ = new image_transport::ImageTransport(nh_);
-    right_sub_ = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "/mynteye/right/image_raw", 1);
-    left_sub_  = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "/mynteye/left/image_raw", 1);
+    right_sub_ = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "/camera/right/image_raw", 1);
+    left_sub_  = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "/camera/left/image_raw", 1);
 
     sync_ = new message_filters::Synchronizer<sync_pol>(sync_pol(10), *right_sub_, *left_sub_);
     sync_->registerCallback(boost::bind(&Frontend::RegisterCallBack,this, _1, _2));
