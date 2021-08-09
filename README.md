@@ -1,4 +1,4 @@
-# SRSLAM: SCUT RoboLab Simultaneous Localization And Mapping
+# SRSLAM: SCUT RobotLab Simultaneous Localization And Mapping
 
 ![Image text](img-folder/91426772_p0_master1200.jpg)
 
