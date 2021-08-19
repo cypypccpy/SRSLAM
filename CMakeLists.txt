@@ -3,7 +3,7 @@ project(srslam)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
-# set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -lfmt")
+set(CMAKE_CXX_FLAGS "-g")
 # set(CMAKE_CXX_FLAGS_RELEASE  "-std=c++11 -O3 -fopenmp -pthread")
 set(CMAKE_CXX_STANDARD 14)
 

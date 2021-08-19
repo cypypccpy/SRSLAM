@@ -62,6 +62,14 @@ echo "source ~/srslam_ws/devel/setup.bash" >> ~/.bashrc
 ```
 
 ### 启动
+
+先下载http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/MH_01_easy/MH_01_easy.bag
+
+```bash
+rosbag play --pause MH_01_easy.bag /cam0/image_raw:=/camera/left/image_raw /cam1/image_raw:=/camera/right/image_raw
+```
+在终端按下空格启动后
+
 ```bash
 rosrun srslam srslam_node
 ```
