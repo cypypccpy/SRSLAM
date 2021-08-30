@@ -5,7 +5,7 @@ Frontend::Frontend() {
     right_sub_ = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "/camera/right/image_raw", 1);
     left_sub_  = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "/camera/left/image_raw", 1);
 
-    sync_ = new message_filters::Synchronizer<sync_pol>(sync_pol(10), *right_sub_, *left_sub_);
+    sync_ = new message_filters::Synchronizer<sync_pol>(sync_pol(10), *left_sub_, *right_sub_);
     sync_->registerCallback(boost::bind(&Frontend::RegisterCallBack,this, _1, _2));
 
     gftt_ =
@@ -15,8 +15,41 @@ Frontend::Frontend() {
 }
 
 void Frontend::RegisterCallBack(const sensor_msgs::ImageConstPtr& msgLeft, const sensor_msgs::ImageConstPtr& msgRight) {
-    current_imgL_ = cv_bridge::toCvShare(msgLeft, "bgr8")->image;
-    current_imgR_ = cv_bridge::toCvShare(msgRight, "bgr8")->image;
+    // Copy the ros image message to cv::Mat.
+    cv_bridge::CvImageConstPtr cv_ptrLeft;
+    try
+    {
+        cv_ptrLeft = cv_bridge::toCvShare(msgLeft, "bgr8");
+    }
+    catch (cv_bridge::Exception& e)
+    {
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        return;
+    }
+
+    cv_bridge::CvImageConstPtr cv_ptrRight;
+    try
+    {
+        cv_ptrRight = cv_bridge::toCvShare(msgRight, "bgr8");
+    }
+    catch (cv_bridge::Exception& e)
+    {
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        return;
+    }
+    
+    cv::Mat current_imgL_ = cv_ptrLeft->image;
+    cv::Mat current_imgR_ = cv_ptrLeft->image;
+    
+    if(current_imgL_.channels()==3) {
+         cv::cvtColor(current_imgL_, current_imgL_, cv::COLOR_BGR2GRAY);
+        cv::cvtColor(current_imgR_, current_imgR_,cv::COLOR_BGR2GRAY);
+    }
+
+    else if(current_imgL_.channels()==4) {
+        cv::cvtColor(current_imgL_, current_imgL_, cv::COLOR_BGRA2GRAY);
+        cv::cvtColor(current_imgR_, current_imgR_,cv::COLOR_BGRA2GRAY);
+    }
 
     auto new_frame = frame::CreateFrame();
     new_frame->left_img_ = current_imgL_;

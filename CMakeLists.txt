@@ -7,6 +7,7 @@ set(CMAKE_CXX_FLAGS "-g")
 # set(CMAKE_CXX_FLAGS_RELEASE  "-std=c++11 -O3 -fopenmp -pthread")
 set(CMAKE_CXX_STANDARD 14)
 
+set(OpenCV_DIR /home/lohse/下载/opencv-4.5.1/build)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
