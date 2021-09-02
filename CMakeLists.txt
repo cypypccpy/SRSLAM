@@ -7,7 +7,7 @@ set(CMAKE_CXX_FLAGS "-g")
 # set(CMAKE_CXX_FLAGS_RELEASE  "-std=c++11 -O3 -fopenmp -pthread")
 set(CMAKE_CXX_STANDARD 14)
 
-set(OpenCV_DIR /home/lohse/下载/opencv-4.5.1/build)
+set(OpenCV_DIR /home/lohse/下载/opencv-3.4.7/build)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -140,7 +140,7 @@ set(THIRD_PARTY_LIBS
 
 ## Declare a C++ library
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}_lib SHARED
   src/camera.cpp
   src/frontend.cpp
   src/stereo.cpp
@@ -152,7 +152,7 @@ add_library(${PROJECT_NAME} SHARED
   src/datastruct/frame.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}_lib
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES} 
   ${THIRD_PARTY_LIBS}
@@ -185,7 +185,7 @@ target_link_libraries(${PROJECT_NAME}_node
   ${Boost_LIBRARIES} 
   ${THIRD_PARTY_LIBS}
 
-  ${PROJECT_NAME}
+  ${PROJECT_NAME}_lib
 )
 
 #############

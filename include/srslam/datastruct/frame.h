@@ -4,6 +4,9 @@
 #include "srslam/datastruct/feature.h"
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <thread>
+#include <mutex>
+#include <unistd.h>
 
 // forward declare
 class mappoint;

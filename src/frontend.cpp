@@ -2,8 +2,8 @@
 
 Frontend::Frontend() {
     it_ = new image_transport::ImageTransport(nh_);
-    right_sub_ = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "/mynteye/right/image_raw", 1);
-    left_sub_  = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "/mynteye/left/image_raw", 1);
+    right_sub_ = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "/cam1/image_raw", 1);
+    left_sub_  = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "/cam0/image_raw", 1);
 
     sync_ = new message_filters::Synchronizer<sync_pol>(sync_pol(10), *left_sub_, *right_sub_);
     sync_->registerCallback(boost::bind(&Frontend::RegisterCallBack,this, _1, _2));
@@ -14,58 +14,33 @@ Frontend::Frontend() {
     num_features_ = 50;
 }
 
+cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
+{
+    cv_bridge::CvImageConstPtr ptr;
+    if (img_msg->encoding == "8UC1")
+    {
+        sensor_msgs::Image img;
+        img.header = img_msg->header;
+        img.height = img_msg->height;
+        img.width = img_msg->width;
+        img.is_bigendian = img_msg->is_bigendian;
+        img.step = img_msg->step;
+        img.data = img_msg->data;
+        img.encoding = "mono8";
+        ptr = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::MONO8);
+    }
+    else
+        ptr = cv_bridge::toCvCopy(img_msg, sensor_msgs::image_encodings::MONO8);
+
+    cv::Mat img = ptr->image.clone();
+
+    return img;
+}
+
 void Frontend::RegisterCallBack(const sensor_msgs::ImageConstPtr& msgLeft, const sensor_msgs::ImageConstPtr& msgRight) {
-    // Copy the ros image message to cv::Mat.
-    cv_bridge::CvImageConstPtr cv_ptrLeft;
-    try
-    {
-        cv_ptrLeft = cv_bridge::toCvShare(msgLeft);
-    }
-    catch (cv_bridge::Exception& e)
-    {
-        ROS_ERROR("cv_bridge exception: %s", e.what());
-        return;
-    }
 
-    cv_bridge::CvImageConstPtr cv_ptrRight;
-    try
-    {
-        cv_ptrRight = cv_bridge::toCvShare(msgRight);
-    }
-    catch (cv_bridge::Exception& e)
-    {
-        ROS_ERROR("cv_bridge exception: %s", e.what());
-        return;
-    }
-
-    cv::Mat current_imgL_ = cv_ptrLeft->image;
-    cv::Mat current_imgR_ = cv_ptrRight->image;
-
-    // cv::Mat dyImg = cv::Mat(current_imgL_.rows, current_imgL_.cols, CV_8UC1);
-    // for (int row = 0; row < current_imgL_.rows; row++)
-    //  {
-    //     for (int col = 0; col < current_imgL_.cols; col++)
-    //     {   
-    //         /* 注意 Mat::at 函数是个模板函数, 需要指明参数类型, 因为这张图是具有红蓝绿三通道的图,
-    //            所以它的参数类型可以传递一个 Vec3b, 这是一个存放 3 个 uchar 数据的 Vec(向量). 这里
-    //            提供了索引重载, [2]表示的是返回第三个通道, 在这里是 Red 通道, 第一个通道(Blue)用[0]返回 */
-    //         dyImg.at<uchar>(row, col) = current_imgL_.at<uchar>(row, col * 3);
-    //     }
-    //  }
-
-    // std::cout << dyImg << std::endl;
-    // cv::imshow("dwa", dyImg);
-    // cv::waitKey(0);
-
-    // if(current_imgL_.channels()==3) {
-    //     cv::cvtColor(current_imgL_, current_imgL_, cv::COLOR_BGR2GRAY);
-    //     cv::cvtColor(current_imgR_, current_imgR_,cv::COLOR_BGR2GRAY);
-    // }
-
-    // else if(current_imgL_.channels()==4) {
-    //     cv::cvtColor(current_imgL_, current_imgL_, cv::COLOR_BGRA2GRAY);
-    //     cv::cvtColor(current_imgR_, current_imgR_,cv::COLOR_BGRA2GRAY);
-    // }
+    current_imgL_ = getImageFromMsg(msgLeft);
+    current_imgR_ = getImageFromMsg(msgRight);
 
     auto new_frame = frame::CreateFrame();
     new_frame->left_img_ = current_imgL_;
