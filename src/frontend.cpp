@@ -9,7 +9,7 @@ Frontend::Frontend() {
     sync_->registerCallback(boost::bind(&Frontend::RegisterCallBack,this, _1, _2));
 
     gftt_ =
-        cv::GFTTDetector::create(150, 0.01, 20);
+        cv::GFTTDetector::create();
     num_features_init_ = 50;
     num_features_ = 50;
 }
@@ -284,6 +284,13 @@ int Frontend::DetectFeatures() {
     }
 
     std::vector<cv::KeyPoint> keypoints;
+    std::vector<cv::Point2f> corners;
+    cv::goodFeaturesToTrack(current_frame_->left_img_, corners, 255 ,0.01, 10, mask);
+    for (auto corner : corners) {
+        cv::circle(current_frame_->left_img_, corner, 2, cv::Scalar(0, 0, 255), 2);
+    }
+    cv::imshow("awd", current_frame_->left_img_);
+    cv::waitKey(0);
     gftt_->detect(current_frame_->left_img_, keypoints, mask);
     int cnt_detected = 0;
     for (auto &kp : keypoints) {
