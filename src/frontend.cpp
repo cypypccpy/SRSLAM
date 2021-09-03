@@ -8,8 +8,6 @@ Frontend::Frontend() {
     sync_ = new message_filters::Synchronizer<sync_pol>(sync_pol(10), *left_sub_, *right_sub_);
     sync_->registerCallback(boost::bind(&Frontend::RegisterCallBack,this, _1, _2));
 
-    gftt_ =
-        cv::GFTTDetector::create();
     num_features_init_ = 50;
     num_features_ = 50;
 }
@@ -285,13 +283,12 @@ int Frontend::DetectFeatures() {
 
     std::vector<cv::KeyPoint> keypoints;
     std::vector<cv::Point2f> corners;
-    cv::goodFeaturesToTrack(current_frame_->left_img_, corners, 255 ,0.01, 10, mask);
-    for (auto corner : corners) {
-        cv::circle(current_frame_->left_img_, corner, 2, cv::Scalar(0, 0, 255), 2);
+    cv::goodFeaturesToTrack(current_frame_->left_img_, corners, 500, 0.01, 10, mask);
+
+    for(auto corner : corners) {
+        keypoints.push_back(cv::KeyPoint(corner, 1.f));
     }
-    cv::imshow("awd", current_frame_->left_img_);
-    cv::waitKey(0);
-    gftt_->detect(current_frame_->left_img_, keypoints, mask);
+
     int cnt_detected = 0;
     for (auto &kp : keypoints) {
         current_frame_->features_left_.push_back(
@@ -345,7 +342,6 @@ int Frontend::FindFeaturesInRight() {
     return num_good_pts;
 }
 
-
 bool Frontend::BuildInitMap() {
     
     std::vector<Eigen::Isometry3d> poses{camera_left_->pose(), camera_right_->pose()};
@@ -363,24 +359,25 @@ bool Frontend::BuildInitMap() {
         Eigen::Vector3d pworld = Eigen::Vector3d::Zero();
 
         if (triangulation(poses, points, pworld) && pworld[2] > 0) {
-                    auto new_map_point = mappoint::CreateNewMappoint();
-                    new_map_point->SetPos(pworld);
-                    new_map_point->AddObservation(current_frame_->features_left_[i]);
-                    new_map_point->AddObservation(current_frame_->features_right_[i]);
-                    current_frame_->features_left_[i]->map_point_ = new_map_point;
-                    current_frame_->features_right_[i]->map_point_ = new_map_point;
-                    cnt_init_landmarks++;
-                    map_->InsertMapPoint(new_map_point);
-                }
-            }
-            current_frame_->SetKeyFrame();
-            map_->InsertKeyFrame(current_frame_);
-            backend_->UpdateMap();
+            auto new_map_point = mappoint::CreateNewMappoint();
+            new_map_point->SetPos(pworld);
+            new_map_point->AddObservation(current_frame_->features_left_[i]);
+            new_map_point->AddObservation(current_frame_->features_right_[i]);
+            current_frame_->features_left_[i]->map_point_ = new_map_point;
+            current_frame_->features_right_[i]->map_point_ = new_map_point;
+            cnt_init_landmarks++;
+            map_->InsertMapPoint(new_map_point);
+        }
+    }
+
+    current_frame_->SetKeyFrame();
+    map_->InsertKeyFrame(current_frame_);
+    backend_->UpdateMap();
 
     ROS_INFO("Initial map created with %zu map points", cnt_init_landmarks);
 
     return true;
-    }
+}
 
 bool Frontend::triangulation(const std::vector<Eigen::Isometry3d> &poses,
                    const std::vector<Eigen::Vector3d> points, Eigen::Vector3d &pt_world) {
@@ -394,6 +391,10 @@ bool Frontend::triangulation(const std::vector<Eigen::Isometry3d> &poses,
     }
     auto svd = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
     pt_world = (svd.matrixV().col(3) / svd.matrixV()(3, 3)).head<3>();
+
+    std::cout << svd.singularValues()[3] / svd.singularValues()[2] << std::endl;
+    std::cout << svd.singularValues()[2] << std::endl;
+    std::cout << svd.singularValues()[3] << std::endl;
 
     if (svd.singularValues()[3] / svd.singularValues()[2] < 1e-2) {
         // 解质量不好，放弃

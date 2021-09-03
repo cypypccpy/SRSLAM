@@ -149,7 +149,7 @@ class Frontend {
         std::shared_ptr<camera> camera_left_ = nullptr;   // 左侧相机
         std::shared_ptr<camera> camera_right_ = nullptr;  // 右侧相机
 
-        std::shared_ptr<map> map_;
+        std::shared_ptr<map> map_ = nullptr;
         std::shared_ptr<Backend> backend_ = nullptr;
         FrontendStatus status_ = FrontendStatus::INITING;
 
@@ -159,9 +159,6 @@ class Frontend {
         int num_features_tracking_ = 50;
         int num_features_tracking_bad_ = 20;
         int num_features_needed_for_keyframe_ = 80;
-
-        // utilities
-        cv::Ptr<cv::GFTTDetector> gftt_;  // feature detector in opencv
 
         //ros
         ros::NodeHandle nh_;  
