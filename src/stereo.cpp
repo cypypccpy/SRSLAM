@@ -1,14 +1,9 @@
-#include "ros/ros.h"
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
 #include <srslam/stereo.h>
 
-static long factory_id = 0;
-
 bool Stereo::Init() {
-    std::shared_ptr<Frontend> frontend_ = std::shared_ptr<Frontend>(new Frontend);
-    std::shared_ptr<Backend> backend_ = std::shared_ptr<Backend>(new Backend);
-    std::shared_ptr<map> map_ = std::shared_ptr<map>(new map);
+    frontend_ = std::shared_ptr<Frontend>(new Frontend);
+    backend_ = std::shared_ptr<Backend>(new Backend);
+    map_ = std::shared_ptr<map>(new map);
 
     std::vector<std::shared_ptr<camera>> cameras_;
     
@@ -55,6 +50,5 @@ bool Stereo::Init() {
 
     backend_->SetMap(map_);
     backend_->SetCameras(cameras_[0], cameras_[1]);
-
     return true;
 }

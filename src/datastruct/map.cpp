@@ -1,4 +1,5 @@
 #include "srslam/datastruct/map.h"
+#include "srslam/datastruct/feature.h"
 
 void map::InsertKeyFrame(std::shared_ptr<frame> frame) {
     current_frame_ = frame;

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "srslam/camera.h"
-#include "srslam/datastruct/feature.h"
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <thread>

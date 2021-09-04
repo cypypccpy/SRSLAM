@@ -2,12 +2,12 @@ cmake_minimum_required(VERSION 3.0.2)
 project(srslam)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 set(CMAKE_CXX_FLAGS "-g")
 # set(CMAKE_CXX_FLAGS_RELEASE  "-std=c++11 -O3 -fopenmp -pthread")
-set(CMAKE_CXX_STANDARD 14)
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++0x")
 
-set(OpenCV_DIR /home/lohse/下载/opencv-3.4.7/build)
+set(OpenCV_DIR /home/lohse/下载/opencv-3.2.0/build)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -135,21 +135,20 @@ include_directories(
 
 set(THIRD_PARTY_LIBS
         ${OpenCV_LIBS}
-        pthread
+        -lpthread
         )
 
 ## Declare a C++ library
 
 add_library(${PROJECT_NAME}_lib SHARED
-  src/camera.cpp
-  src/frontend.cpp
-  src/stereo.cpp
-  src/backend.cpp
-
-  src/datastruct/map.cpp
-  src/datastruct/mappoint.cpp
-  src/datastruct/feature.cpp
   src/datastruct/frame.cpp
+  src/datastruct/mappoint.cpp
+  src/datastruct/map.cpp
+  src/camera.cpp
+  src/datastruct/feature.cpp
+  src/frontend.cpp
+  src/backend.cpp
+  src/stereo.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_lib
@@ -184,7 +183,7 @@ target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES} 
   ${THIRD_PARTY_LIBS}
-
+  -lgtsam  
   ${PROJECT_NAME}_lib
 )
 

@@ -2,34 +2,18 @@
 
 #include <opencv2/features2d.hpp>
 #include <opencv2/opencv.hpp>
-#include <ros/ros.h>
 #include <opencv2/core/core.hpp>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <srslam/camera.h>
-#include <srslam/backend.h>
-#include <srslam/datastruct/map.h>
-#include <srslam/datastruct/mappoint.h>
 #include <srslam/datastruct/frame.h>
-#include <srslam/datastruct/feature.h>
+#include <srslam/datastruct/map.h>
 
-#include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
-#include<iostream>
-#include<algorithm>
-#include<fstream>
-#include<chrono>
-#include <camera_info_manager/camera_info_manager.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
-
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/image_encodings.h>
-#include <sensor_msgs/PointCloud.h>
-#include <sensor_msgs/Imu.h>
 
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Cal3_S2Stereo.h>
