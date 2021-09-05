@@ -7,42 +7,44 @@ bool Stereo::Init() {
 
     std::vector<std::shared_ptr<camera>> cameras_;
     
-    std::ifstream fin("/home/lohse/srslam_ws/src/SRSLAM/config/calib.txt");
+    CameraParam cameraparam;
 
-    if (!fin) {
-        ROS_INFO("cannot find /home/lohse/srslam_ws/src/SRSLAM/config/calib.txt");
-        return false;
-    }
+    cameraparam = readFromYamlFile("/home/lohse/srslam_ws/src/SRSLAM/config/cam0.yaml");
 
-    for (int i = 0; i < 4; ++i) {
-        char camera_name[3];
-        for (int k = 0; k < 3; ++k) {
-            fin >> camera_name[k];
-        }
-        double projection_data[12];
-        for (int k = 0; k < 12; ++k) {
-            fin >> projection_data[k];
-        }
-        Eigen::Matrix<double, 3, 3> K;
-        K << projection_data[0], projection_data[1], projection_data[2],
-            projection_data[4], projection_data[5], projection_data[6],
-            projection_data[8], projection_data[9], projection_data[10];
-        Eigen::Matrix<double, 3, 1> t;
-        t << projection_data[3], projection_data[7], projection_data[11];
-        
-        t = K.inverse() * t;
-        K = K * 0.5;
+    Eigen::Matrix<double, 3, 3> K;
+    K << cameraparam.m_fx, 0.0, cameraparam.m_fy,
+        0.0, cameraparam.m_cx, cameraparam.m_cy,
+        0.0, 0.0, 1.0;
+    Eigen::Matrix<double, 3, 1> t;
+    t << 300.0, 0.0, 0.0;
+    
+    t = K.inverse() * t;
+    K = K * 0.5;
 
-        Eigen::Isometry3d begin_pose_;
-        begin_pose_.pretranslate(t);
-        
-        std::shared_ptr<camera> new_camera(new camera(K(0, 0), K(1, 1), K(0, 2), K(1, 2),
-                                            t.norm(), begin_pose_));
-        
-        cameras_.push_back(new_camera);
-        ROS_INFO("Camera %d extrinsics: ", i);
-    }
-    fin.close();
+    Eigen::Isometry3d begin_pose_;
+    begin_pose_.pretranslate(t);
+    
+    std::shared_ptr<camera> new_camera(new camera(K(0, 0), K(1, 1), K(0, 2), K(1, 2),
+                                        t.norm(), begin_pose_));
+    
+    cameras_.push_back(new_camera);
+
+    cameraparam = readFromYamlFile("/home/lohse/srslam_ws/src/SRSLAM/config/cam1.yaml");
+
+    K << cameraparam.m_fx, 0.0, cameraparam.m_fy,
+        0.0, cameraparam.m_cx, cameraparam.m_cy,
+        0.0, 0.0, 1.0;
+    t << 300.0, 0.0, 0.0;
+    
+    t = K.inverse() * t;
+    K = K * 0.5;
+
+    begin_pose_.pretranslate(t);
+    
+    std::shared_ptr<camera> new_camera1(new camera(K(0, 0), K(1, 1), K(0, 2), K(1, 2),
+                                        t.norm(), begin_pose_));
+    
+    cameras_.push_back(new_camera1);
 
     frontend_->SetCameras(cameras_.at(0), cameras_.at(1));
     frontend_->SetBackend(backend_);
@@ -51,4 +53,21 @@ bool Stereo::Init() {
     backend_->SetMap(map_);
     backend_->SetCameras(cameras_[0], cameras_[1]);
     return true;
+}
+
+
+CameraParam  Stereo::readFromYamlFile(const std::string& filename) {
+    cv::FileStorage fs(filename, cv::FileStorage::READ);
+
+    CameraParam cameraparam_;
+    cv::FileNode n = fs["mirror_parameters"];
+    cameraparam_.m_xi = static_cast<double>(n["xi"]);
+
+    n = fs["intrinsic_parameters"];
+    cameraparam_.m_fx = static_cast<double>(n["fx"]);
+    cameraparam_.m_fy = static_cast<double>(n["fy"]);
+    cameraparam_.m_cx = static_cast<double>(n["cx"]);
+    cameraparam_.m_cy = static_cast<double>(n["cy"]);
+
+    return cameraparam_;
 }
