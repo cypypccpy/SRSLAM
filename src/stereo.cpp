@@ -34,7 +34,7 @@ bool Stereo::Init() {
     K << cameraparam.m_fx, 0.0, cameraparam.m_fy,
         0.0, cameraparam.m_cx, cameraparam.m_cy,
         0.0, 0.0, 1.0;
-    t << 300.0, 0.0, 0.0;
+    t << 110.073, 0.0, 0.0;
     
     t = K.inverse() * t;
     K = K * 0.5;
@@ -45,6 +45,8 @@ bool Stereo::Init() {
                                         t.norm(), begin_pose_));
     
     cameras_.push_back(new_camera1);
+
+    ROS_INFO("Stereo Inited");
 
     frontend_->SetCameras(cameras_.at(0), cameras_.at(1));
     frontend_->SetBackend(backend_);

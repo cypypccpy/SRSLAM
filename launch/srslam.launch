@@ -1,4 +1,7 @@
 <launch>
     <node name="srslam_node" pkg="srslam" type="srslam_node" respawn="false" output="screen">
     </node>
+
+    <node pkg="rosbag" type="play" name="play" args="--clock /home/lohse/下载/MH_01_easy.bag">
+    </node>
 </launch>
