@@ -378,6 +378,7 @@ bool Frontend::BuildInitMap() {
         Eigen::Vector3d pworld = Eigen::Vector3d::Zero();
 
         if (triangulation(poses, points, pworld) && pworld[2] > 0) {
+            std::cout << pworld << std::endl;
             auto new_map_point = mappoint::CreateNewMappoint();
             new_map_point->SetPos(pworld);
             new_map_point->AddObservation(current_frame_->features_left_[i]);
