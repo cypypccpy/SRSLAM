@@ -154,7 +154,7 @@ int Frontend::EstimateCurrentPose() {
                                     camera_left_->cy_, 1, camera_left_->baseline_));
 
     //create and add stereo factors between last pose (key value 1) and all landmarks
-    for (size_t i = 0; i < current_frame_->features_right_.size(); i++) {
+    for (size_t i = 0; i < current_frame_->features_left_.size(); i++) {
         if (current_frame_->features_right_[i] == nullptr) {
             continue;
         }
@@ -402,12 +402,17 @@ bool Frontend::triangulation(const std::vector<Eigen::Isometry3d> &poses,
     b.setZero();
     for (size_t i = 0; i < poses.size(); ++i) {
         Eigen::Matrix<double, 3, 4> m = poses[i].matrix().block(0, 0, 3, 4);
+        std::cout << m << std::endl;
         A.block<1, 4>(2 * i, 0) = points[i][0] * m.row(2) - m.row(0);
         A.block<1, 4>(2 * i + 1, 0) = points[i][1] * m.row(2) - m.row(1);
     }
+
+    std::cout << A << std::endl;
     auto svd = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
     pt_world = (svd.matrixV().col(3) / svd.matrixV()(3, 3)).head<3>();
 
+    std::cout << (svd.matrixV().col(3) / svd.matrixV()(3, 3)).head<3>() << std::endl;
+    std::cout << svd.matrixV() << std::endl;
     // 判断解的质量，不好就放弃
     if (svd.singularValues()[3] / svd.singularValues()[2] < 1e-2) {
         return true;
