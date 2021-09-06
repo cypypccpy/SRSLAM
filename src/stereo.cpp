@@ -12,11 +12,11 @@ bool Stereo::Init() {
     cameraparam = readFromYamlFile("/home/lohse/srslam_ws/src/SRSLAM/config/cam0.yaml");
 
     Eigen::Matrix<double, 3, 3> K;
-    K << cameraparam.m_fx, 0.0, cameraparam.m_fy,
-        0.0, cameraparam.m_cx, cameraparam.m_cy,
+    K << cameraparam.m_fx, 0.0, cameraparam.m_cx,
+        0.0, cameraparam.m_fy, cameraparam.m_cy,
         0.0, 0.0, 1.0;
     Eigen::Matrix<double, 3, 1> t;
-    t << 110.073, 0.0, 0.0;
+    t << 1.10073, 0.0, 0.0;
 
     Eigen::Isometry3d begin_pose_;
     begin_pose_.pretranslate(t);
@@ -28,18 +28,17 @@ bool Stereo::Init() {
 
     cameraparam = readFromYamlFile("/home/lohse/srslam_ws/src/SRSLAM/config/cam1.yaml");
 
-    Eigen::Matrix<double, 3, 3> K1;
-    K1 << cameraparam.m_fx, 0.0, cameraparam.m_fy,
-        0.0, cameraparam.m_cx, cameraparam.m_cy,
+    K << cameraparam.m_fx, 0.0, cameraparam.m_cx,
+        0.0, cameraparam.m_fy, cameraparam.m_cy,
         0.0, 0.0, 1.0;
-    Eigen::Matrix<double, 3, 1> t1;
-    t1 << 110.073, 0.0, 0.0;
 
-    Eigen::Isometry3d begin_pose_1;
-    begin_pose_1.pretranslate(t1);
+    t << 1.10073, 0.0, 0.0;
     
-    std::shared_ptr<camera> new_camera1(new camera(K1(0, 0), K1(1, 1), K1(0, 2), K1(1, 2),
-                                        t1.norm(), begin_pose_1));
+    begin_pose_.pretranslate(t);
+    begin_pose_ = begin_pose_.matrix();
+    
+    std::shared_ptr<camera> new_camera1(new camera(K(0, 0), K(1, 1), K(0, 2), K(1, 2),
+                                        t.norm(), begin_pose_));
     
     cameras_.push_back(new_camera1);
 

@@ -168,8 +168,11 @@ int Frontend::EstimateCurrentPose() {
             gtsam::StereoPoint2(current_frame_->features_left_[i]->position_.pt.x, 
                                 current_frame_->features_right_[i]->position_.pt.x, current_frame_->features_left_[i]->position_.pt.y),
                                 model, gtsam::Symbol('p', 1), gtsam::Symbol('f', i), K);
-
-        std::cout << "Symbol: f" << i << std::endl;
+        
+        gtsam::Pose3 camPose = initial_estimate_frontend.at<gtsam::Pose3>(gtsam::Symbol('p', 0));
+        //transformFrom() transforms the input Point3 from the camera pose space, camPose, to the global space
+        gtsam::Point3 worldPoint = camPose.transformFrom(gtsam::Point3(last_frame_->features_left_[i]->map_point_.lock()->Pos()));
+        initial_estimate_frontend.insert(gtsam::Symbol('f', i), worldPoint);
     }
 
     gtsam::Pose3 current_pose = initial_estimate_frontend.at<gtsam::Pose3>(gtsam::Symbol('p', 1));
@@ -402,17 +405,13 @@ bool Frontend::triangulation(const std::vector<Eigen::Isometry3d> &poses,
     b.setZero();
     for (size_t i = 0; i < poses.size(); ++i) {
         Eigen::Matrix<double, 3, 4> m = poses[i].matrix().block(0, 0, 3, 4);
-        std::cout << m << std::endl;
         A.block<1, 4>(2 * i, 0) = points[i][0] * m.row(2) - m.row(0);
         A.block<1, 4>(2 * i + 1, 0) = points[i][1] * m.row(2) - m.row(1);
     }
 
-    std::cout << A << std::endl;
     auto svd = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
     pt_world = (svd.matrixV().col(3) / svd.matrixV()(3, 3)).head<3>();
 
-    std::cout << (svd.matrixV().col(3) / svd.matrixV()(3, 3)).head<3>() << std::endl;
-    std::cout << svd.matrixV() << std::endl;
     // 判断解的质量，不好就放弃
     if (svd.singularValues()[3] / svd.singularValues()[2] < 1e-2) {
         return true;
