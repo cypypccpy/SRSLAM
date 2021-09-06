@@ -16,7 +16,7 @@ bool Stereo::Init() {
         0.0, cameraparam.m_cx, cameraparam.m_cy,
         0.0, 0.0, 1.0;
     Eigen::Matrix<double, 3, 1> t;
-    t << 300.0, 0.0, 0.0;
+    t << 110.073, 0.0, 0.0;
     
     t = K.inverse() * t;
     K = K * 0.5;

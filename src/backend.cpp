@@ -46,26 +46,42 @@ void Backend::Optimize(map::KeyframesType &keyframes,
     for (int pose_id = 0; pose_id < keyframes.size(); pose_id++) {
         pose_list.push_back(keyframes.find(pose_id)->second->id_);
         initial_estimate.insert(gtsam::Symbol('x', pose_id), gtsam::Pose3(keyframes.find(pose_id)->second->Pose().matrix()));
+        // std::cout << "pose id: " << pose_id << std::endl;
     }
 
     //此处存疑，不确定是继续用StereoPoint2还是正统Point3
     for (int keypoint_id = 0; keypoint_id < landmarks.size(); keypoint_id++) {
         for (auto observation : landmarks.find(keypoint_id)->second->observations_) {
-            gtsam::Pose3 camPose = initial_estimate.at<gtsam::Pose3>(gtsam::Symbol('x', observation.lock()->frame_.lock()->id_));
+            //记录右图的像素点横坐标
+            if (observation.lock()->is_on_left_image_ == true) {
+                float observation_l_x = observation.lock()->position_.pt.x;
+                float observation_l_y = observation.lock()->position_.pt.y;
+                continue;
+            }
 
-            // transformFrom() transforms the input Point3 from the camera pose space,
-            // camPose, to the global space
-            gtsam::Point3 worldPoint = camPose.transformFrom(gtsam::Point3(landmarks.find(keypoint_id)->second->Pos()));
-            initial_estimate.insert(gtsam::Symbol('l', landmarks.find(keypoint_id)->second->id_), worldPoint);
+            graph.emplace_shared<
+                gtsam::GenericStereoFactor<gtsam::Pose3, gtsam::Point3> >(gtsam::StereoPoint2(observation_l_x, observation.lock()->position_.pt.x, observation_l_y), model,
+                    gtsam::Symbol('x', observation.lock()->frame_.lock()->id_), gtsam::Symbol('l', landmarks.find(keypoint_id)->second->id_), K);
+
+            // std::cout << "x id - l id: " << observation.lock()->frame_.lock()->id_ << " - " << landmarks.find(keypoint_id)->second->id_ << std::endl;
+
+            if (!initial_estimate.exists(gtsam::Symbol('l', landmarks.find(keypoint_id)->second->id_))) {
+                gtsam::Pose3 camPose = initial_estimate.at<gtsam::Pose3>(gtsam::Symbol('x', observation.lock()->frame_.lock()->id_));
+
+                // transformFrom() transforms the input Point3 from the camera pose space,
+                // camPose, to the global space
+                gtsam::Point3 worldPoint = camPose.transformFrom(gtsam::Point3(landmarks.find(keypoint_id)->second->Pos()));
+                initial_estimate.insert(gtsam::Symbol('l', landmarks.find(keypoint_id)->second->id_), worldPoint);
+            }
         }
     }
 
-    gtsam::Pose3 first_pose = initial_estimate.at<gtsam::Pose3>(gtsam::Symbol('x', 1));
+    gtsam::Pose3 first_pose = initial_estimate.at<gtsam::Pose3>(gtsam::Symbol('x', pose_list[0]));
     // constrain the first pose such that it cannot change from its original value
     // during optimization
     // NOTE: NonlinearEquality forces the optimizer to use QR rather than Cholesky
     // QR is much slower than Cholesky, but numerically more stable
-    graph.emplace_shared<gtsam::NonlinearEquality<gtsam::Pose3> >(gtsam::Symbol('x', 1), first_pose);
+    graph.emplace_shared<gtsam::NonlinearEquality<gtsam::Pose3> >(gtsam::Symbol('x', pose_list[0]), first_pose);
 
     std::cout << "Optimizing" << std::endl;
     // create Levenberg-Marquardt optimizer to optimize the factor graph

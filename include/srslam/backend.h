@@ -58,4 +58,7 @@ class Backend {
     std::atomic<bool> backend_running_;
 
     std::shared_ptr<camera> cam_left_ = nullptr, cam_right_ = nullptr;
+
+    float observation_l_x;
+    float observation_l_y;
 };

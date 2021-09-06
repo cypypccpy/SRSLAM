@@ -74,6 +74,8 @@ bool Frontend::Track() {
     }
 
     int num_track_last = TrackLastFrame();
+    int num_coor_features = FindFeaturesInRight();
+    
     tracking_inliers_ = EstimateCurrentPose();
 
     if (tracking_inliers_ > num_features_tracking_) {
@@ -137,12 +139,12 @@ int Frontend::TrackLastFrame() {
 }
 
 int Frontend::EstimateCurrentPose() {
-    gtsam::Values initial_estimate;
-    gtsam::NonlinearFactorGraph graph;
+    gtsam::Values initial_estimate_frontend;
+    gtsam::NonlinearFactorGraph graph_frontend;
 
     // 2 poses
-    initial_estimate.insert(gtsam::Symbol('x', 1), gtsam::Pose3(last_frame_->Pose().matrix()));
-    initial_estimate.insert(gtsam::Symbol('x', 2), gtsam::Pose3(current_frame_->Pose().matrix()));
+    initial_estimate_frontend.insert(gtsam::Symbol('p', 0), gtsam::Pose3(last_frame_->Pose().matrix()));
+    initial_estimate_frontend.insert(gtsam::Symbol('p', 1), gtsam::Pose3(current_frame_->Pose().matrix()));
 
     // create factor noise model with 3 sigmas of value 1
     const auto model = gtsam::noiseModel::Isotropic::Sigma(3, 1);
@@ -152,25 +154,36 @@ int Frontend::EstimateCurrentPose() {
                                     camera_left_->cy_, 1, camera_left_->baseline_));
 
     //create and add stereo factors between last pose (key value 1) and all landmarks
-    for (size_t i = 0; i < current_frame_->features_left_.size(); ++i) {
-        graph.emplace_shared<gtsam::GenericStereoFactor<gtsam::Pose3,gtsam::Point3> >(
+    for (size_t i = 0; i < current_frame_->features_right_.size(); i++) {
+        if (current_frame_->features_right_[i] == nullptr) {
+            continue;
+        }
+
+        graph_frontend.emplace_shared<gtsam::GenericStereoFactor<gtsam::Pose3,gtsam::Point3> >(
             gtsam::StereoPoint2(current_frame_->features_left_[i]->position_.pt.x, 
                                 current_frame_->features_right_[i]->position_.pt.x, current_frame_->features_left_[i]->position_.pt.y),
-                                model, gtsam::Symbol('x', 1), gtsam::Symbol('l', i + 3), K);
+                                model, gtsam::Symbol('p', 0), gtsam::Symbol('f', i), K);
+
+        graph_frontend.emplace_shared<gtsam::GenericStereoFactor<gtsam::Pose3,gtsam::Point3> >(
+            gtsam::StereoPoint2(current_frame_->features_left_[i]->position_.pt.x, 
+                                current_frame_->features_right_[i]->position_.pt.x, current_frame_->features_left_[i]->position_.pt.y),
+                                model, gtsam::Symbol('p', 1), gtsam::Symbol('f', i), K);
+
+        std::cout << "Symbol: f" << i << std::endl;
     }
 
-    gtsam::Pose3 current_pose = initial_estimate.at<gtsam::Pose3>(gtsam::Symbol('x', 2));
+    gtsam::Pose3 current_pose = initial_estimate_frontend.at<gtsam::Pose3>(gtsam::Symbol('p', 1));
     // constrain the first pose such that it cannot change from its original value
     // during optimization
     // NOTE: NonlinearEquality forces the optimizer to use QR rather than Cholesky
     // QR is much slower than Cholesky, but numerically more stable
-    graph.emplace_shared<gtsam::NonlinearEquality<gtsam::Pose3> >(gtsam::Symbol('x', 2), current_pose);
+    graph_frontend.emplace_shared<gtsam::NonlinearEquality<gtsam::Pose3> >(gtsam::Symbol('p', 1), current_pose);
 
-    std::cout << "Optimizing" << std::endl;
+    std::cout << "Using BA to solve pnp" << std::endl;
     // create Levenberg-Marquardt optimizer to optimize the factor graph
     gtsam::LevenbergMarquardtParams params;
     params.orderingType = gtsam::Ordering::METIS;
-    gtsam::LevenbergMarquardtOptimizer optimizer(graph, initial_estimate, params);
+    gtsam::LevenbergMarquardtOptimizer optimizer(graph_frontend, initial_estimate_frontend, params);
     gtsam::Values result = optimizer.optimize();
 
     std::cout << "Final result sample:" << std::endl;
