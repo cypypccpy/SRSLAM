@@ -3,11 +3,11 @@ project(srslam)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
-set(CMAKE_CXX_FLAGS "-g")
+set(CMAKE_CXX_FLAGS "-g -std=c++11 -O3 -fopenmp -pthread")
 # set(CMAKE_CXX_FLAGS_RELEASE  "-std=c++11 -O3 -fopenmp -pthread")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++0x")
 
-set(OpenCV_DIR /home/lohse/下载/opencv-3.2.0/build)
+set(OpenCV_DIR ~/下载/opencv-3.2.0/build)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
