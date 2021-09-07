@@ -16,10 +16,10 @@ bool Stereo::Init() {
         0.0, cameraparam.m_fy, cameraparam.m_cy,
         0.0, 0.0, 1.0;
     Eigen::Matrix<double, 3, 1> t;
-    t << 1.10073, 0.0, 0.0;
+    t << 110.073, 1.0, 1.0;
 
     Eigen::Isometry3d begin_pose_;
-    begin_pose_.pretranslate(t);
+    begin_pose_.matrix() = Eigen::Matrix4d::Zero();
     
     std::shared_ptr<camera> new_camera(new camera(K(0, 0), K(1, 1), K(0, 2), K(1, 2),
                                         t.norm(), begin_pose_));
@@ -32,11 +32,13 @@ bool Stereo::Init() {
         0.0, cameraparam.m_fy, cameraparam.m_cy,
         0.0, 0.0, 1.0;
 
-    t << 1.10073, 0.0, 0.0;
+    Eigen::Matrix4d cam_bios_;
+    cam_bios_ << 0.99999, 0.00231, 0.00037, -0.11007,
+                            -0.00231, 0.99989, 0.01408, 0.00039,
+                            -0.00034, -0.01409, 0.99990, -0.00085;
     
-    begin_pose_.pretranslate(t);
-    begin_pose_ = begin_pose_.matrix();
-    
+    begin_pose_.matrix() = cam_bios_;
+
     std::shared_ptr<camera> new_camera1(new camera(K(0, 0), K(1, 1), K(0, 2), K(1, 2),
                                         t.norm(), begin_pose_));
     

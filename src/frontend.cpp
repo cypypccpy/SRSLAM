@@ -412,6 +412,8 @@ bool Frontend::triangulation(const std::vector<Eigen::Isometry3d> &poses,
 
     auto svd = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
     pt_world = (svd.matrixV().col(3) / svd.matrixV()(3, 3)).head<3>();
+    std::cout << A << std::endl;
+    std::cout << svd.matrixV() << std::endl;
 
     // 判断解的质量，不好就放弃
     if (svd.singularValues()[3] / svd.singularValues()[2] < 1e-2) {
