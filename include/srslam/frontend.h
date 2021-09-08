@@ -35,6 +35,8 @@ enum class FrontendStatus { INITING, TRACKING_GOOD, TRACKING_BAD, LOST };
  */
 class Frontend {
     public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
         Frontend();
 
         /// 外部接口

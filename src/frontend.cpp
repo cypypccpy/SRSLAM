@@ -159,19 +159,17 @@ int Frontend::EstimateCurrentPose() {
             continue;
         }
 
-        graph_frontend.emplace_shared<gtsam::GenericStereoFactor<gtsam::Pose3,gtsam::Point3> >(
-            gtsam::StereoPoint2(current_frame_->features_left_[i]->position_.pt.x, 
-                                current_frame_->features_right_[i]->position_.pt.x, current_frame_->features_left_[i]->position_.pt.y),
-                                model, gtsam::Symbol('p', 0), gtsam::Symbol('f', i), K);
+        for (int p = 0; p < 2; p++) {
+            graph_frontend.emplace_shared<gtsam::GenericStereoFactor<gtsam::Pose3,gtsam::Point3> >(
+                gtsam::StereoPoint2(current_frame_->features_left_[i]->position_.pt.x, 
+                                    current_frame_->features_right_[i]->position_.pt.x, current_frame_->features_left_[i]->position_.pt.y),
+                                    model, gtsam::Symbol('p', p), gtsam::Symbol('f', i), K);
+        }
 
-        graph_frontend.emplace_shared<gtsam::GenericStereoFactor<gtsam::Pose3,gtsam::Point3> >(
-            gtsam::StereoPoint2(current_frame_->features_left_[i]->position_.pt.x, 
-                                current_frame_->features_right_[i]->position_.pt.x, current_frame_->features_left_[i]->position_.pt.y),
-                                model, gtsam::Symbol('p', 1), gtsam::Symbol('f', i), K);
-        
         gtsam::Pose3 camPose = initial_estimate_frontend.at<gtsam::Pose3>(gtsam::Symbol('p', 0));
         //transformFrom() transforms the input Point3 from the camera pose space, camPose, to the global space
-        gtsam::Point3 worldPoint = camPose.transformFrom(gtsam::Point3(last_frame_->features_left_[i]->map_point_.lock()->Pos()));
+        std::cout << current_frame_->features_left_[i]->map_point_.lock()->pos_ << std::endl;
+        gtsam::Point3 worldPoint = camPose.transformFrom(gtsam::Point3(current_frame_->features_left_[i]->map_point_.lock()->pos_));
         initial_estimate_frontend.insert(gtsam::Symbol('f', i), worldPoint);
     }
 
@@ -391,7 +389,7 @@ bool Frontend::BuildInitMap() {
 
     current_frame_->SetKeyFrame();
     map_->InsertKeyFrame(current_frame_);
-    backend_->UpdateMap();
+    // backend_->UpdateMap();
 
     ROS_INFO("Initial map created with %zu map points", cnt_init_landmarks);
 
