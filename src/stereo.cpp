@@ -9,7 +9,7 @@ bool Stereo::Init() {
     
     CameraParam cameraparam;
 
-    cameraparam = readFromYamlFile("/home/lohse/srslam_ws/src/SRSLAM/config/cam0.yaml");
+    cameraparam = readFromYamlFile("../config/cam0.yaml");
 
     Eigen::Matrix<double, 3, 3> K;
     K << cameraparam.m_fx, 0.0, cameraparam.m_cx,
@@ -27,7 +27,7 @@ bool Stereo::Init() {
     
     cameras_.push_back(new_camera);
 
-    cameraparam = readFromYamlFile("/home/lohse/srslam_ws/src/SRSLAM/config/cam1.yaml");
+    cameraparam = readFromYamlFile("../config/cam1.yaml");
 
     K << cameraparam.m_fx, 0.0, cameraparam.m_cx,
         0.0, cameraparam.m_fy, cameraparam.m_cy,

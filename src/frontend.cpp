@@ -375,7 +375,7 @@ bool Frontend::BuildInitMap() {
                      current_frame_->features_right_[i]->position_.pt.y))};
         Eigen::Vector3d pworld = Eigen::Vector3d::Zero();
 
-        if (triangulation(poses, points, pworld) && pworld[2] > 0) {
+        if (Frontend::triangulation(poses, points, pworld) && pworld[2] > 0) {
             auto new_map_point = mappoint::CreateNewMappoint();
             new_map_point->SetPos(pworld);
             new_map_point->AddObservation(current_frame_->features_left_[i]);
@@ -398,16 +398,16 @@ bool Frontend::BuildInitMap() {
 
 bool Frontend::triangulation(const std::vector<Eigen::Isometry3d> &poses,
                    const std::vector<Eigen::Vector3d> points, Eigen::Vector3d &pt_world) {
-    Eigen::Matrix<double, -1, -1> A(2 * poses.size(), 4);
-    Eigen::Matrix<double, -1, 1> b(2 * poses.size());
-    b.setZero();
-    for (size_t i = 0; i < poses.size(); ++i) {
+
+    A = Eigen::MatrixXd::Zero(4, 4);
+
+    for (size_t i = 0; i < 2; i++) {
         Eigen::Matrix<double, 3, 4> m = poses[i].matrix().block(0, 0, 3, 4);
         A.block<1, 4>(2 * i, 0) = points[i][0] * m.row(2) - m.row(0);
         A.block<1, 4>(2 * i + 1, 0) = points[i][1] * m.row(2) - m.row(1);
     }
 
-    auto svd = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
+    svd.compute(A, Eigen::ComputeThinU | Eigen::ComputeThinV);
     pt_world = (svd.matrixV().col(3) / svd.matrixV()(3, 3)).head<3>();
 
     // 判断解的质量，不好就放弃

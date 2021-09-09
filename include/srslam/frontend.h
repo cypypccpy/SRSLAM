@@ -4,6 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <Eigen/Core>
+#include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <srslam/datastruct/frame.h>
 #include <srslam/datastruct/map.h>
@@ -137,6 +138,10 @@ class Frontend {
 
         std::shared_ptr<map> map_ = nullptr;
         std::shared_ptr<Backend> backend_ = nullptr;
+
+        Eigen::JacobiSVD<Eigen::MatrixXd> svd;
+        Eigen::Matrix<double, -1, -1> A;
+        
         FrontendStatus status_ = FrontendStatus::INITING;
 
         // params
