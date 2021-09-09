@@ -153,6 +153,14 @@ int Frontend::EstimateCurrentPose() {
         new gtsam::Cal3_S2Stereo(camera_left_->fx_, camera_left_->fy_, camera_left_->cx_,
                                     camera_left_->cy_, 1, camera_left_->baseline_));
 
+    std::vector<std::shared_ptr<feature>> uti_features;
+    for(auto last_feature_left_ : last_frame_->features_left_) {
+        if (last_feature_left_->map_point_.lock() != nullptr) {
+            uti_features.push_back(last_feature_left_);
+        }
+    }
+    std::cout << "uti_features.size(): " << uti_features.size() << std::endl;
+
     //create and add stereo factors between last pose (key value 1) and all landmarks
     for (size_t i = 0; i < current_frame_->features_left_.size(); i++) {
         if (current_frame_->features_right_[i] == nullptr) {
@@ -168,9 +176,8 @@ int Frontend::EstimateCurrentPose() {
 
         gtsam::Pose3 camPose = initial_estimate_frontend.at<gtsam::Pose3>(gtsam::Symbol('p', 0));
         //transformFrom() transforms the input Point3 from the camera pose space, camPose, to the global space
-        std::cout << current_frame_->features_left_[i]->map_point_.lock()->pos_ << std::endl;
-        gtsam::Point3 worldPoint = camPose.transformFrom(gtsam::Point3(current_frame_->features_left_[i]->map_point_.lock()->pos_));
-        initial_estimate_frontend.insert(gtsam::Symbol('f', i), worldPoint);
+        // gtsam::Point3 worldPoint = camPose.transformFrom(gtsam::Point3(current_frame_->features_left_[i]->map_point_.lock()->pos_));
+        // initial_estimate_frontend.insert(gtsam::Symbol('f', i), worldPoint);
     }
 
     gtsam::Pose3 current_pose = initial_estimate_frontend.at<gtsam::Pose3>(gtsam::Symbol('p', 1));
@@ -194,7 +201,6 @@ int Frontend::EstimateCurrentPose() {
     //可选:去除outlier，现在只是优化pose
     Eigen::Isometry3d pose_ = pose_values.end()->value.cast<Eigen::Isometry3d>();
     current_frame_->SetPose(pose_);
-
 }
 
 bool Frontend::InsertKeyframe() {

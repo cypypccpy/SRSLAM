@@ -24,7 +24,7 @@ class mappoint {
     std::mutex data_mutex_;
     int observed_times_ = 0;  // being observed by feature matching algo.
     std::list<std::weak_ptr<feature>> observations_;
-
+                
     mappoint() {}
 
     mappoint(long id, Eigen::Vector3d position);
