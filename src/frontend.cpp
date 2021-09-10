@@ -153,17 +153,12 @@ int Frontend::EstimateCurrentPose() {
         new gtsam::Cal3_S2Stereo(camera_left_->fx_, camera_left_->fy_, camera_left_->cx_,
                                     camera_left_->cy_, 1, camera_left_->baseline_));
 
-    std::vector<std::shared_ptr<feature>> uti_features;
-    for(auto last_feature_left_ : last_frame_->features_left_) {
-        if (last_feature_left_->map_point_.lock() != nullptr) {
-            uti_features.push_back(last_feature_left_);
-        }
-    }
-    std::cout << "uti_features.size(): " << uti_features.size() << std::endl;
 
+    int uti_features = current_frame_->features_left_.size();
     //create and add stereo factors between last pose (key value 1) and all landmarks
     for (size_t i = 0; i < current_frame_->features_left_.size(); i++) {
-        if (current_frame_->features_right_[i] == nullptr) {
+        if (current_frame_->features_right_[i] == nullptr || current_frame_->features_left_[i]->map_point_.lock() == nullptr) {
+            uti_features--;
             continue;
         }
 
@@ -179,7 +174,8 @@ int Frontend::EstimateCurrentPose() {
         // gtsam::Point3 worldPoint = camPose.transformFrom(gtsam::Point3(current_frame_->features_left_[i]->map_point_.lock()->pos_));
         // initial_estimate_frontend.insert(gtsam::Symbol('f', i), worldPoint);
     }
-
+    std::cout << "uti_features: " << uti_features << std::endl;
+   
     gtsam::Pose3 current_pose = initial_estimate_frontend.at<gtsam::Pose3>(gtsam::Symbol('p', 1));
     // constrain the first pose such that it cannot change from its original value
     // during optimization
